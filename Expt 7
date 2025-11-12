@@ -1,0 +1,37 @@
+clc;
+clear;
+close;
+
+function y = awgn(x, snr_dB)
+    L = length(x);
+    snr = 10^(snr_dB/10);
+    Esym = sum(abs(x).^2)/L;
+    N0 = Esym/snr;
+    noise = sqrt(N0/2)*(rand(1,L,"normal") + %i*rand(1,L,"normal"));
+    y = x + noise;
+endfunction
+
+data_bits = 100000;
+b = rand(1, data_bits) > 0.5;
+s = 2*b - 1;
+SNRdB = 0:9;
+for k = 1:length(SNRdB)
+    y = awgn(s, SNRdB(k));
+    error = 0;
+    for c = 1:data_bits
+        if ((y(c) > 0 & s(c) == -1) | (y(c) < 0 & s(c) == 1)) then
+            error = error + 1;
+        end
+    end
+    BER(k) = error / data_bits;
+end
+SNR = 10.^(SNRdB / 10);
+BER_thBPSK = (1/2)*erfc(sqrt(SNR));
+BER_thQPSK = erfc(sqrt(SNR));
+scf();
+semilogy(SNRdB, BER, 'r');
+xtitle('Probability of Error Graph', 'SNR (dB)', 'BER');
+xgrid();
+semilogy(SNRdB, BER_thBPSK, 'k');
+semilogy(SNRdB, BER_thQPSK, 'b');
+legend(['Simulated BPSK','Theoretical BPSK','Theoretical QPSK']);
